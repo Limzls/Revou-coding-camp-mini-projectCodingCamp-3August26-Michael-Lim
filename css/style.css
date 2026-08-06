@@ -372,6 +372,207 @@ html.dark #sortBtn.active-desc {
     border-color: #7c3aed;
 }
 
+/* ===== Spending Limits ===== */
+.limit-hint {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.limit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.limit-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.limit-item label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.limit-item input {
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+}
+
+.limit-item input:focus {
+    border-color: #4f46e5;
+    background: #fff;
+}
+
+/* ===== Limit Status Cards ===== */
+.limit-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.limit-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.limit-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+}
+
+.limit-row-label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.limit-row-numbers {
+    color: #6b7280;
+}
+
+.limit-row-numbers.over {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #4f46e5;
+    transition: width 0.4s ease, background 0.3s;
+}
+
+.progress-bar-fill.over {
+    background: #ef4444;
+}
+
+/* ===== Over-limit badge on alert banner ===== */
+.limit-over-banner {
+    background: #fef2f2;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    color: #b91c1c;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ===== Over-limit highlight on transaction items ===== */
+#transactionList li.over-limit {
+    border-color: #fca5a5;
+    background: #fff5f5;
+}
+
+#transactionList li.over-limit:hover {
+    background: #fee2e2;
+}
+
+#transactionList li.over-limit .transaction-amount {
+    color: #ef4444;
+}
+
+.over-limit-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ef4444;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 99px;
+    padding: 1px 7px;
+    white-space: nowrap;
+}
+
+/* ===== Balance card over-limit state ===== */
+.balance-card.over-limit {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* ===== Dark Mode — Limit Section ===== */
+html.dark .limit-hint {
+    color: #64748b;
+}
+
+html.dark .limit-item label {
+    color: #94a3b8;
+}
+
+html.dark .limit-item input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+html.dark .limit-item input:focus {
+    border-color: #7c3aed;
+    background: #1e293b;
+}
+
+html.dark .limit-item input::placeholder {
+    color: #475569;
+}
+
+html.dark .limit-row-label {
+    color: #cbd5e1;
+}
+
+html.dark .limit-row-numbers {
+    color: #64748b;
+}
+
+html.dark .progress-bar-track {
+    background: #334155;
+}
+
+html.dark .limit-over-banner {
+    background: #2d1515;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+}
+
+html.dark #transactionList li.over-limit {
+    border-color: #7f1d1d;
+    background: #1c0a0a;
+}
+
+html.dark #transactionList li.over-limit:hover {
+    background: #2d1515;
+}
+
+html.dark #transactionList li.over-limit .transaction-amount {
+    color: #f87171;
+}
+
+html.dark .over-limit-badge {
+    color: #f87171;
+    background: #2d1515;
+    border-color: #7f1d1d;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
     header h1 {

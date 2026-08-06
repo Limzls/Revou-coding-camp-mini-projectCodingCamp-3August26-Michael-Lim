@@ -4,6 +4,12 @@ let chart = null;
 // sortOrder: 'none' | 'asc' | 'desc'
 let sortOrder = 'none';
 
+// Spending limits per category (0 = no limit)
+const CATEGORIES = ['Food', 'Transport', 'Fun', 'Other'];
+let spendingLimits = JSON.parse(localStorage.getItem('spendingLimits')) || {
+    Food: 0, Transport: 0, Fun: 0, Other: 0,
+};
+
 // ===== DOM References =====
 const form = document.getElementById('expenseForm');
 const itemNameInput = document.getElementById('itemName');
@@ -15,6 +21,16 @@ const chartCanvas = document.getElementById('expenseChart');
 const sortBtn = document.getElementById('sortBtn');
 const sortIcon = document.getElementById('sortIcon');
 
+// Limit inputs
+const limitInputs = {
+    Food:      document.getElementById('limitFood'),
+    Transport: document.getElementById('limitTransport'),
+    Fun:       document.getElementById('limitFun'),
+    Other:     document.getElementById('limitOther'),
+};
+const limitStatusEl = document.getElementById('limitStatus');
+const balanceCard   = document.querySelector('.balance-card');
+
 // ===== Helpers =====
 function formatRupiah(amount) {
     return 'Rp ' + Number(amount).toLocaleString('id-ID');
@@ -24,10 +40,29 @@ function saveToStorage() {
     localStorage.setItem('transactions', JSON.stringify(transactions));
 }
 
+function saveLimits() {
+    localStorage.setItem('spendingLimits', JSON.stringify(spendingLimits));
+}
+
+// ===== Compute category totals =====
+function getCategoryTotals() {
+    const totals = { Food: 0, Transport: 0, Fun: 0, Other: 0 };
+    transactions.forEach(t => {
+        const cat = t.category in totals ? t.category : 'Other';
+        totals[cat] += t.amount;
+    });
+    return totals;
+}
+
 // ===== Update Balance =====
 function updateBalance() {
     const total = transactions.reduce((sum, t) => sum + t.amount, 0);
     balanceEl.textContent = formatRupiah(total);
+
+    // Highlight balance card if ANY category is over limit
+    const totals = getCategoryTotals();
+    const anyOver = CATEGORIES.some(cat => spendingLimits[cat] > 0 && totals[cat] > spendingLimits[cat]);
+    balanceCard.classList.toggle('over-limit', anyOver);
 }
 
 // ===== Render Transaction List =====
@@ -39,6 +74,12 @@ function renderTransactions() {
         return;
     }
 
+    // Build a set of over-limit categories
+    const totals = getCategoryTotals();
+    const overCategories = new Set(
+        CATEGORIES.filter(cat => spendingLimits[cat] > 0 && totals[cat] > spendingLimits[cat])
+    );
+
     // Sort a display copy — never mutate the original array order
     let displayList = transactions.map((t, originalIndex) => ({ ...t, originalIndex }));
     if (sortOrder === 'asc') {
@@ -48,11 +89,16 @@ function renderTransactions() {
     }
 
     displayList.forEach((t) => {
+        const cat = t.category in { Food:1, Transport:1, Fun:1, Other:1 } ? t.category : 'Other';
+        const isOver = overCategories.has(cat);
         const li = document.createElement('li');
+        if (isOver) li.classList.add('over-limit');
+
         li.innerHTML = `
             <div class="transaction-info">
                 <span class="transaction-name">${escapeHTML(t.name)}</span>
                 <span class="transaction-category">${escapeHTML(t.category)}</span>
+                ${isOver ? '<span class="over-limit-badge">⚠ Over Limit</span>' : ''}
             </div>
             <div class="transaction-right">
                 <span class="transaction-amount">${formatRupiah(t.amount)}</span>
@@ -63,7 +109,57 @@ function renderTransactions() {
     });
 }
 
-// ===== Update Sort Button UI =====
+// ===== Render Limit Status =====
+const CATEGORY_ICONS = { Food: '🍔', Transport: '🚗', Fun: '🎉', Other: '📦' };
+
+function renderLimitStatus() {
+    const totals = getCategoryTotals();
+
+    // Only show rows for categories that have a limit set
+    const activeCats = CATEGORIES.filter(cat => spendingLimits[cat] > 0);
+
+    if (activeCats.length === 0) {
+        limitStatusEl.innerHTML = '';
+        return;
+    }
+
+    limitStatusEl.innerHTML = activeCats.map(cat => {
+        const limit  = spendingLimits[cat];
+        const spent  = totals[cat];
+        const pct    = Math.min((spent / limit) * 100, 100);
+        const isOver = spent > limit;
+
+        return `
+            <div class="limit-row">
+                <div class="limit-row-header">
+                    <span class="limit-row-label">${CATEGORY_ICONS[cat]} ${cat}</span>
+                    <span class="limit-row-numbers ${isOver ? 'over' : ''}">
+                        ${formatRupiah(spent)} / ${formatRupiah(limit)}
+                        ${isOver ? '⚠ Over!' : ''}
+                    </span>
+                </div>
+                <div class="progress-bar-track" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar-fill ${isOver ? 'over' : ''}" style="width: ${pct}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ===== Limit Input Listeners =====
+CATEGORIES.forEach(cat => {
+    const input = limitInputs[cat];
+
+    // Pre-fill saved value
+    if (spendingLimits[cat] > 0) input.value = spendingLimits[cat];
+
+    input.addEventListener('input', () => {
+        const val = parseFloat(input.value);
+        spendingLimits[cat] = isNaN(val) || val <= 0 ? 0 : val;
+        saveLimits();
+        render();
+    });
+});
 function updateSortBtn() {
     sortBtn.classList.remove('active-asc', 'active-desc');
     if (sortOrder === 'asc') {
@@ -180,6 +276,7 @@ function renderChart() {
 function render() {
     updateBalance();
     updateSortBtn();
+    renderLimitStatus();
     renderTransactions();
     renderChart();
 }

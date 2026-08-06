@@ -57,6 +57,30 @@
             </form>
         </section>
 
+        <section class="limit-section">
+            <h2>Spending Limits</h2>
+            <p class="limit-hint">Set a budget cap per category. Transactions over the limit will be highlighted.</p>
+            <div class="limit-grid">
+                <div class="limit-item">
+                    <label for="limitFood">🍔 Food</label>
+                    <input type="number" id="limitFood" placeholder="No limit" min="0">
+                </div>
+                <div class="limit-item">
+                    <label for="limitTransport">🚗 Transport</label>
+                    <input type="number" id="limitTransport" placeholder="No limit" min="0">
+                </div>
+                <div class="limit-item">
+                    <label for="limitFun">🎉 Fun</label>
+                    <input type="number" id="limitFun" placeholder="No limit" min="0">
+                </div>
+                <div class="limit-item">
+                    <label for="limitOther">📦 Other</label>
+                    <input type="number" id="limitOther" placeholder="No limit" min="0">
+                </div>
+            </div>
+            <div id="limitStatus" class="limit-status"></div>
+        </section>
+
         <section class="transaction-section">
 
             <div class="section-header">
