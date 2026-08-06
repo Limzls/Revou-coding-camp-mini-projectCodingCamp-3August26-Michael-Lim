@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>>Expense & Budget Visualizer</title>
+    <title>Expense & Budget Visualizer</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
     <header>
-        <h1> Expense & Budget Visualizer </h1>
+        <h1>Expense & Budget Visualizer</h1>
     </header>
-    
-     <main>
+
+    <main>
 
         <section class="balance-card">
             <h2>Total Balance</h2>
             <p id="balance">Rp 0</p>
         </section>
-        
+
         <section>
-            <form id="expenseForm"
-            
+            <form id="expenseForm">
+
                 <label for="itemName">Item Name</label>
                 <input
                     type="text"
@@ -42,6 +46,34 @@
                     <option value="Fun">Fun</option>
                 </select>
 
+                <button type="submit">
+                    Add Transaction
+                </button>
+
+            </form>
         </section>
+
+        <section class="transaction-section">
+
+            <h2>Transaction List</h2>
+
+            <ul id="transactionList">
+                <!-- Data transaksi dari JavaScript -->
+            </ul>
+
+        </section>
+
+        <section class="chart-section">
+
+            <h2>Expense Distribution</h2>
+
+            <canvas id="expenseChart"></canvas>
+
+        </section>
+
+    </main>
+
 </body>
+
+<script src="js/script.js"></script>
 </html>
