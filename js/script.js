@@ -1,6 +1,8 @@
 // ===== State =====
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 let chart = null;
+// sortOrder: 'none' | 'asc' | 'desc'
+let sortOrder = 'none';
 
 // ===== DOM References =====
 const form = document.getElementById('expenseForm');
@@ -10,6 +12,8 @@ const categorySelect = document.getElementById('category');
 const balanceEl = document.getElementById('balance');
 const transactionList = document.getElementById('transactionList');
 const chartCanvas = document.getElementById('expenseChart');
+const sortBtn = document.getElementById('sortBtn');
+const sortIcon = document.getElementById('sortIcon');
 
 // ===== Helpers =====
 function formatRupiah(amount) {
@@ -35,7 +39,15 @@ function renderTransactions() {
         return;
     }
 
-    transactions.forEach((t, index) => {
+    // Sort a display copy — never mutate the original array order
+    let displayList = transactions.map((t, originalIndex) => ({ ...t, originalIndex }));
+    if (sortOrder === 'asc') {
+        displayList.sort((a, b) => a.amount - b.amount);
+    } else if (sortOrder === 'desc') {
+        displayList.sort((a, b) => b.amount - a.amount);
+    }
+
+    displayList.forEach((t) => {
         const li = document.createElement('li');
         li.innerHTML = `
             <div class="transaction-info">
@@ -44,11 +56,28 @@ function renderTransactions() {
             </div>
             <div class="transaction-right">
                 <span class="transaction-amount">${formatRupiah(t.amount)}</span>
-                <button class="btn-delete" aria-label="Delete transaction" data-index="${index}">&#x2715;</button>
+                <button class="btn-delete" aria-label="Delete transaction" data-index="${t.originalIndex}">&#x2715;</button>
             </div>
         `;
         transactionList.appendChild(li);
     });
+}
+
+// ===== Update Sort Button UI =====
+function updateSortBtn() {
+    sortBtn.classList.remove('active-asc', 'active-desc');
+    if (sortOrder === 'asc') {
+        sortBtn.classList.add('active-asc');
+        sortIcon.textContent = '↑';
+        sortBtn.setAttribute('title', 'Sort by amount: Low → High (click for High → Low)');
+    } else if (sortOrder === 'desc') {
+        sortBtn.classList.add('active-desc');
+        sortIcon.textContent = '↓';
+        sortBtn.setAttribute('title', 'Sort by amount: High → Low (click to reset)');
+    } else {
+        sortIcon.textContent = '⇅';
+        sortBtn.setAttribute('title', 'Sort by amount: None (click for Low → High)');
+    }
 }
 
 // ===== Escape HTML to prevent XSS =====
@@ -77,11 +106,16 @@ function renderChart() {
     const labels = Object.keys(categoryTotals);
     const data = Object.values(categoryTotals);
     const colors = labels.map(l => CATEGORY_COLORS[l] || CATEGORY_COLORS['Other']);
+    const isDark = document.documentElement.classList.contains('dark');
+    const borderColor = isDark ? '#1e293b' : '#fff';
+    const legendColor = isDark ? '#e2e8f0' : '#333';
 
     if (chart) {
         chart.data.labels = labels;
         chart.data.datasets[0].data = data;
         chart.data.datasets[0].backgroundColor = colors;
+        chart.data.datasets[0].borderColor = borderColor;
+        chart.options.plugins.legend.labels.color = legendColor;
         chart.update();
         return;
     }
@@ -94,7 +128,7 @@ function renderChart() {
                 data,
                 backgroundColor: colors,
                 borderWidth: 2,
-                borderColor: '#fff',
+                borderColor,
             }],
         },
         options: {
@@ -105,6 +139,7 @@ function renderChart() {
                     labels: {
                         padding: 16,
                         font: { size: 13 },
+                        color: legendColor,
                     },
                 },
                 tooltip: {
@@ -125,6 +160,7 @@ function renderChart() {
 // ===== Full Render =====
 function render() {
     updateBalance();
+    updateSortBtn();
     renderTransactions();
     renderChart();
 }
@@ -173,6 +209,42 @@ transactionList.addEventListener('click', (e) => {
     saveToStorage();
     render();
 });
+
+// ===== Sort Button =====
+sortBtn.addEventListener('click', () => {
+    if (sortOrder === 'none') sortOrder = 'asc';
+    else if (sortOrder === 'asc') sortOrder = 'desc';
+    else sortOrder = 'none';
+    render();
+});
+
+// ===== Dark Mode =====
+const darkToggleBtn = document.getElementById('darkModeToggle');
+
+function applyDarkMode(isDark) {
+    document.documentElement.classList.toggle('dark', isDark);
+    darkToggleBtn.textContent = isDark ? '☀️' : '🌙';
+    darkToggleBtn.setAttribute('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+
+    // Update chart border color to match background
+    if (chart) {
+        chart.data.datasets[0].borderColor = isDark ? '#1e293b' : '#fff';
+        chart.options.plugins.legend.labels.color = isDark ? '#e2e8f0' : '#333';
+        chart.update();
+    }
+}
+
+function toggleDarkMode() {
+    const isDark = !document.documentElement.classList.contains('dark');
+    localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+    applyDarkMode(isDark);
+}
+
+darkToggleBtn.addEventListener('click', toggleDarkMode);
+
+// Apply saved preference on load
+const savedDark = localStorage.getItem('darkMode') === 'true';
+applyDarkMode(savedDark);
 
 // ===== Initial Render =====
 render();

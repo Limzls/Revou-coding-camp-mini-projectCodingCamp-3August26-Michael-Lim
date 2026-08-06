@@ -12,6 +12,9 @@
 
     <header>
         <h1>Expense & Budget Visualizer</h1>
+        <button id="darkModeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+            🌙
+        </button>
     </header>
 
     <main>
@@ -55,7 +58,12 @@
 
         <section class="transaction-section">
 
-            <h2>Transaction List</h2>
+            <div class="section-header">
+                <h2>Transaction List</h2>
+                <button id="sortBtn" aria-label="Sort by amount" title="Sort by amount: None">
+                    Sort by Amount <span id="sortIcon">⇅</span>
+                </button>
+            </div>
 
             <ul id="transactionList">
                 <!-- Data transaksi dari JavaScript -->
@@ -73,7 +81,9 @@
 
     </main>
 
+    
 </body>
+
 
 <script src="js/script.js"></script>
 </html>
