@@ -95,6 +95,9 @@ const CATEGORY_COLORS = {
     Other:     '#c4b5fd',
 };
 
+// Register the datalabels plugin globally
+Chart.register(ChartDataLabels);
+
 function renderChart() {
     // Aggregate amounts by category
     const categoryTotals = {};
@@ -109,6 +112,7 @@ function renderChart() {
     const isDark = document.documentElement.classList.contains('dark');
     const borderColor = isDark ? '#1e293b' : '#fff';
     const legendColor = isDark ? '#e2e8f0' : '#333';
+    const total = data.reduce((a, b) => a + b, 0);
 
     if (chart) {
         chart.data.labels = labels;
@@ -151,6 +155,21 @@ function renderChart() {
                             return ` ${formatRupiah(val)} (${pct}%)`;
                         },
                     },
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: {
+                        weight: 'bold',
+                        size: 13,
+                    },
+                    formatter: (value, ctx) => {
+                        const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = ((value / sum) * 100).toFixed(1);
+                        // Hide label if slice is too small to avoid clutter
+                        return parseFloat(pct) < 5 ? '' : `${pct}%`;
+                    },
+                    textShadowBlur: 4,
+                    textShadowColor: 'rgba(0,0,0,0.4)',
                 },
             },
         },
