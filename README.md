@@ -1,1 +1,1 @@
-# Revou-coding-camp-mini-project.
+# Revou-coding-camp-mini-project
