@@ -10,6 +10,11 @@ let spendingLimits = JSON.parse(localStorage.getItem('spendingLimits')) || {
     Food: 0, Transport: 0, Fun: 0, Other: 0,
 };
 
+// Monthly summary navigation
+const now = new Date();
+let viewYear  = now.getFullYear();
+let viewMonth = now.getMonth(); // 0-indexed
+
 // ===== DOM References =====
 const form = document.getElementById('expenseForm');
 const itemNameInput = document.getElementById('itemName');
@@ -30,6 +35,12 @@ const limitInputs = {
 };
 const limitStatusEl = document.getElementById('limitStatus');
 const balanceCard   = document.querySelector('.balance-card');
+
+// Monthly summary
+const monthlySummaryEl = document.getElementById('monthlySummary');
+const monthLabelEl     = document.getElementById('monthLabel');
+const prevMonthBtn     = document.getElementById('prevMonth');
+const nextMonthBtn     = document.getElementById('nextMonth');
 
 // ===== Helpers =====
 function formatRupiah(amount) {
@@ -272,12 +283,117 @@ function renderChart() {
     });
 }
 
+// ===== Render Monthly Summary =====
+const MONTH_NAMES = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+
+function renderMonthlySummary() {
+    // Update label
+    monthLabelEl.textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+
+    // Filter transactions for the viewed month
+    const monthTx = transactions.filter(t => {
+        if (!t.date) return false;
+        const d = new Date(t.date);
+        return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+    });
+
+    if (monthTx.length === 0) {
+        monthlySummaryEl.innerHTML = `<p class="monthly-empty">No transactions recorded for ${MONTH_NAMES[viewMonth]} ${viewYear}.</p>`;
+        return;
+    }
+
+    // Total & count
+    const total = monthTx.reduce((sum, t) => sum + t.amount, 0);
+    const count = monthTx.length;
+    const avg   = total / count;
+
+    // Per-category breakdown
+    const catTotals = {};
+    monthTx.forEach(t => {
+        const cat = CATEGORIES.includes(t.category) ? t.category : 'Other';
+        catTotals[cat] = (catTotals[cat] || 0) + t.amount;
+    });
+
+    const catRows = Object.entries(catTotals)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, amount]) => {
+            const pct     = ((amount / total) * 100).toFixed(1);
+            const barPct  = ((amount / total) * 100).toFixed(0);
+            return `
+                <tr>
+                    <td><span class="cat-pill">${CATEGORY_ICONS[cat] || '📦'} ${cat}</span></td>
+                    <td>
+                        <span class="mini-bar-track"><span class="mini-bar-fill" style="width:${barPct}%"></span></span>
+                        ${pct}%
+                    </td>
+                    <td>${formatRupiah(amount)}</td>
+                </tr>
+            `;
+        }).join('');
+
+    // Biggest single transaction
+    const biggest = monthTx.reduce((max, t) => t.amount > max.amount ? t : max, monthTx[0]);
+
+    monthlySummaryEl.innerHTML = `
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Spent</div>
+                <div class="stat-value">${formatRupiah(total)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Transactions</div>
+                <div class="stat-value highlight">${count}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg / Transaction</div>
+                <div class="stat-value">${formatRupiah(Math.round(avg))}</div>
+            </div>
+        </div>
+        <table class="monthly-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Share</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${catRows}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2">Total</td>
+                    <td>${formatRupiah(total)}</td>
+                </tr>
+            </tfoot>
+        </table>
+        <p style="margin-top:0.75rem; font-size:0.78rem; color:#6b7280;">
+            🏆 Biggest transaction: <strong>${escapeHTML(biggest.name)}</strong> — ${formatRupiah(biggest.amount)}
+        </p>
+    `;
+}
+
+// ===== Month Nav Listeners =====
+prevMonthBtn.addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderMonthlySummary();
+});
+
+nextMonthBtn.addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    renderMonthlySummary();
+});
+
 // ===== Full Render =====
 function render() {
     updateBalance();
     updateSortBtn();
     renderLimitStatus();
     renderTransactions();
+    renderMonthlySummary();
     renderChart();
 }
 
@@ -306,7 +422,7 @@ form.addEventListener('submit', (e) => {
         return;
     }
 
-    transactions.push({ name, amount, category });
+    transactions.push({ name, amount, category, date: new Date().toISOString() });
     saveToStorage();
     render();
 
